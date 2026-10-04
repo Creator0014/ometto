@@ -2,18 +2,9 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>おめっと</title>
-
-    <meta
-        name="description"
-        content="おめっと - デジタル寄せ書き・誕生日カード"
-    >
 
     <style>
         * {
@@ -46,17 +37,15 @@
 
         .loading {
             text-align: center;
-            padding: 30px;
         }
 
         .logo {
             font-size: 32px;
             font-weight: 700;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         .message {
-            font-size: 15px;
             color: #777;
         }
 
@@ -79,52 +68,12 @@
                 transform: rotate(360deg);
             }
         }
-
-        .error {
-            display: none;
-
-            max-width: 400px;
-            padding: 24px;
-
-            text-align: center;
-        }
-
-        .error h1 {
-            margin-top: 0;
-            font-size: 22px;
-        }
-
-        .error p {
-            color: #666;
-            line-height: 1.7;
-        }
-
-        .retry {
-            display: inline-block;
-
-            margin-top: 12px;
-            padding: 10px 20px;
-
-            border: none;
-            border-radius: 8px;
-
-            background: #06c755;
-            color: white;
-
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .retry:hover {
-            opacity: 0.9;
-        }
     </style>
 </head>
 
 <body>
 
-    <!-- ローディング表示 -->
-    <div id="loading" class="loading">
+    <div class="loading">
 
         <div class="logo">
             おめっと
@@ -133,193 +82,108 @@
         <div class="spinner"></div>
 
         <div class="message">
-            カードを読み込んでいます…
+            読み込んでいます…
         </div>
 
     </div>
 
 
-    <!-- エラー表示 -->
-    <div id="error" class="error">
-
-        <h1>
-            カードを読み込めませんでした
-        </h1>
-
-        <p>
-            カードのURLが正しくないか、<br>
-            一時的にアクセスできない可能性があります。
-        </p>
-
-        <button
-            class="retry"
-            onclick="location.reload()"
-        >
-            もう一度試す
-        </button>
-
-    </div>
-
-
     <script>
-        /*
-         * ============================================
-         * おめっと
-         * Render → Cloudflare Tunnel 転送
-         * ============================================
-         *
-         * Render:
-         *
-         * https://ometto.onrender.com
-         *
-         * Cloudflare Tunnel:
-         *
-         * https://dried-weapon-divide-job.trycloudflare.com
-         *
-         * 例:
-         *
-         * Render:
-         * /card/card_vnw4yk4
-         *
-         * ↓
-         *
-         * Cloudflare:
-         * /card/card_vnw4yk4
-         */
 
-
-        // ============================================
-        // 設定
-        // ============================================
+        // ==========================================
+        // Cloudflare Tunnel
+        // ==========================================
 
         const CLOUDFLARE_URL =
             "https://dried-weapon-divide-job.trycloudflare.com";
 
 
-        // ============================================
-        // 転送処理
-        // ============================================
+        // ==========================================
+        // 現在のURLを取得
+        // ==========================================
 
-        function redirectToCloudflare() {
+        const path =
+            window.location.pathname;
 
-            // 現在のURLからパスを取得
-            //
-            // 例:
-            // /card/card_vnw4yk4
-            //
-            const path =
-                window.location.pathname;
+        const search =
+            window.location.search;
 
-
-            // URLパラメータ
-            //
-            // 例:
-            // ?test=123
-            //
-            const search =
-                window.location.search;
+        const hash =
+            window.location.hash;
 
 
-            // ハッシュ
-            //
-            // 例:
-            // #open
-            //
-            const hash =
-                window.location.hash;
+        // ==========================================
+        // 転送先URLを作成
+        // ==========================================
+
+        let target;
 
 
-            // /card/ 以外だった場合
-            if (!path.startsWith("/card/")) {
+        /*
+         * /
+         *
+         * → Cloudflare /
+         */
 
-                showError(
-                    "このページはカードURLからアクセスしてください。"
-                );
+        if (path === "/") {
 
-                return;
-            }
+            target =
+                CLOUDFLARE_URL + "/";
+
+        }
 
 
-            // Cloudflare側のURLを作成
-            const target =
+        /*
+         * /card/xxxxx
+         *
+         * → Cloudflare /card/xxxxx
+         */
+
+        else if (path.startsWith("/card/")) {
+
+            target =
                 CLOUDFLARE_URL +
                 path +
                 search +
                 hash;
 
-
-            // デバッグ用
-            console.log(
-                "おめっとカード転送:",
-                target
-            );
-
-
-            /*
-             * replace() を使用。
-             *
-             * これにより、
-             *
-             * Render URL
-             *
-             * ↓
-             *
-             * Cloudflare URL
-             *
-             * という転送になります。
-             *
-             * ブラウザの「戻る」で
-             * Renderの中継ページに戻りにくくなります。
-             */
-
-            window.location.replace(target);
         }
 
 
-        // ============================================
-        // エラー表示
-        // ============================================
+        /*
+         * /card以外のURL
+         *
+         * 例:
+         *
+         * /test
+         * /hello
+         * /abc/123
+         *
+         * これらもそのままCloudflareへ
+         */
 
-        function showError(message) {
+        else {
 
-            const loading =
-                document.getElementById("loading");
+            target =
+                CLOUDFLARE_URL +
+                path +
+                search +
+                hash;
 
-            const error =
-                document.getElementById("error");
-
-
-            if (loading) {
-                loading.style.display = "none";
-            }
-
-
-            if (error) {
-
-                error.style.display = "block";
-
-                const paragraph =
-                    error.querySelector("p");
-
-                if (paragraph) {
-                    paragraph.textContent = message;
-                }
-            }
         }
 
 
-        // ============================================
-        // ページ読み込み完了後に実行
-        // ============================================
+        // ==========================================
+        // 転送
+        // ==========================================
 
-        document.addEventListener(
-            "DOMContentLoaded",
-            function () {
-
-                redirectToCloudflare();
-
-            }
+        console.log(
+            "転送先:",
+            target
         );
+
+
+        window.location.replace(target);
 
     </script>
 
