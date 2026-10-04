@@ -2,28 +2,384 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>おめっと</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                "Noto Sans JP",
+                sans-serif;
+
+            background: #ffffff;
+            color: #333333;
+        }
+
+        .loading {
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            font-size: 15px;
+            color: #777777;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+
+            margin: 20px auto;
+
+            border: 4px solid #eeeeee;
+            border-top-color: #06c755;
+
+            border-radius: 50%;
+
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            display: none;
+
+            text-align: center;
+            padding: 30px;
+        }
+
+        .error h1 {
+            font-size: 24px;
+        }
+
+        .error p {
+            color: #777777;
+            line-height: 1.7;
+        }
+    </style>
 </head>
 
 <body>
 
-    <p>読み込み中...</p>
+    <!-- ==========================================
+         ローディング
+         ========================================== -->
+
+    <div
+        id="loading"
+        class="loading"
+    >
+
+        <div class="logo">
+            おめっと
+        </div>
+
+        <div class="spinner"></div>
+
+        <div class="message">
+            読み込んでいます…
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================
+         エラー
+         ========================================== -->
+
+    <div
+        id="error"
+        class="error"
+    >
+
+        <h1>
+            ページを読み込めませんでした
+        </h1>
+
+        <p id="errorMessage">
+            ページの読み込み中に問題が発生しました。
+        </p>
+
+    </div>
+
 
     <script>
-        const CLOUDFLARE =
-            "https://dried-weapon-divide-job.trycloudflare.com";
 
-        const target =
-            CLOUDFLARE +
-            window.location.pathname +
-            window.location.search +
-            window.location.hash;
+        (() => {
 
-        console.log("現在:", window.location.href);
-        console.log("転送先:", target);
+            // =========================================
+            // Cloudflare Tunnel
+            // =========================================
 
-        window.location.replace(target);
+            const CLOUDFLARE_URL =
+                "https://dried-weapon-divide-job.trycloudflare.com";
+
+
+            // =========================================
+            // 現在のURL
+            // =========================================
+
+            const currentURL =
+                new URL(window.location.href);
+
+
+            // =========================================
+            // 現在のパス
+            // =========================================
+
+            let path =
+                currentURL.pathname;
+
+
+            // =========================================
+            // クエリ
+            // =========================================
+
+            let search =
+                currentURL.search;
+
+
+            // =========================================
+            // ハッシュ
+            // =========================================
+
+            let hash =
+                currentURL.hash;
+
+
+            // =========================================
+            // デバッグ
+            // =========================================
+
+            console.log(
+                "現在のURL:",
+                window.location.href
+            );
+
+            console.log(
+                "現在のパス:",
+                path
+            );
+
+            console.log(
+                "リファラー:",
+                document.referrer
+            );
+
+
+            // =========================================
+            // CASE 1
+            //
+            // /card/... がそのまま残っている
+            //
+            // 例:
+            //
+            // /card/card_vnw4yk4_1791074772739
+            // =========================================
+
+            if (
+                path.startsWith("/card/")
+            ) {
+
+                console.log(
+                    "カードURLを検出しました。"
+                );
+
+            }
+
+
+            // =========================================
+            // CASE 2
+            //
+            // Renderが /index.html に変更してしまった場合
+            //
+            // 例:
+            //
+            // /index.html
+            //
+            // document.referrer:
+            //
+            // https://ometto.onrender.com/card/xxxxx
+            // =========================================
+
+            else if (
+                path === "/index.html"
+            ) {
+
+                console.log(
+                    "/index.html を検出しました。"
+                );
+
+
+                const referrer =
+                    document.referrer;
+
+
+                // -------------------------------------
+                // リファラーが存在する場合
+                // -------------------------------------
+
+                if (referrer) {
+
+                    try {
+
+                        const referrerURL =
+                            new URL(referrer);
+
+
+                        /*
+                         * Render自身から来た場合
+                         */
+
+                        if (
+                            referrerURL.hostname ===
+                            "ometto.onrender.com"
+                        ) {
+
+                            path =
+                                referrerURL.pathname;
+
+                            search =
+                                referrerURL.search;
+
+                            hash =
+                                referrerURL.hash;
+
+
+                            console.log(
+                                "元のパスを復元:",
+                                path
+                            );
+
+                        }
+
+                    } catch (error) {
+
+                        console.error(
+                            "リファラー解析エラー:",
+                            error
+                        );
+
+                    }
+
+                }
+
+            }
+
+
+            // =========================================
+            // CASE 3
+            //
+            // ルート
+            //
+            // /index.htmlにされていて
+            // 元URLも取得できない場合は
+            // Cloudflareのルートへ送る
+            // =========================================
+
+            else if (
+                path === "/"
+            ) {
+
+                console.log(
+                    "ルートアクセスです。"
+                );
+
+            }
+
+
+            // =========================================
+            // CASE 4
+            //
+            // その他のURL
+            // =========================================
+
+            else {
+
+                console.log(
+                    "その他のパス:",
+                    path
+                );
+
+            }
+
+
+            // =========================================
+            // Cloudflare転送先を作成
+            // =========================================
+
+            const target =
+                CLOUDFLARE_URL +
+                path +
+                search +
+                hash;
+
+
+            // =========================================
+            // 最終確認
+            // =========================================
+
+            console.log(
+                "================================="
+            );
+
+            console.log(
+                "最終転送先:",
+                target
+            );
+
+            console.log(
+                "================================="
+            );
+
+
+            // =========================================
+            // 転送
+            // =========================================
+
+            window.location.replace(
+                target
+            );
+
+        })();
+
     </script>
 
 </body>
