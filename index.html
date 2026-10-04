@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting...</title>
+  <script>
+    // 転送先の Cloudflare URL
+    const TARGET_URL = "https://dried-weapon-divide-job.trycloudflare.com";
+
+    // 現在のパスとクエリを取得
+    let pathname = window.location.pathname;
+    const search = window.location.search;
+
+    // ローカルファイル（D:/... や C:/...）で開いた場合はパスを無視してルートにする
+    if (pathname.includes(':') || window.location.protocol === 'file:') {
+      pathname = '';
+    }
+
+    // 転送先 URL を生成
+    const destination = TARGET_URL + pathname + search;
+
+    // リダイレクト実行
+    window.location.replace(destination);
+  </script>
+</head>
+<body>
+  <p>転送中...</p>
+</body>
+</html>
