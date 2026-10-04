@@ -4,23 +4,15 @@
   <meta charset="UTF-8">
   <title>Redirecting...</title>
   <script>
-    // 転送先の Cloudflare URL
-    const TARGET_URL = "https://dried-weapon-divide-job.trycloudflare.com";
+    // 転送先ベースURL（末尾にスラッシュをつけない）
+    const TARGET_BASE_URL = "https://dried-weapon-divide-job.trycloudflare.com";
 
-    // 現在のパスとクエリを取得
-    let pathname = window.location.pathname;
+    // 現在の「パス（/card/...）」と「クエリ（?foo=bar）」をそのまま取得
+    const path = window.location.pathname;
     const search = window.location.search;
 
-    // ローカルファイル（D:/... や C:/...）で開いた場合はパスを無視してルートにする
-    if (pathname.includes(':') || window.location.protocol === 'file:') {
-      pathname = '';
-    }
-
-    // 転送先 URL を生成
-    const destination = TARGET_URL + pathname + search;
-
-    // リダイレクト実行
-    window.location.replace(destination);
+    // 転送先URLを組み立てて即座に移動
+    window.location.replace(TARGET_BASE_URL + path + search);
   </script>
 </head>
 <body>
