@@ -1,21 +1,327 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>Redirecting...</title>
-  <script>
-    // 転送先の Cloudflare URL（末尾のスラッシュは無し）
-    const TARGET_URL = "https://dried-weapon-divide-job.trycloudflare.com";
+    <meta charset="UTF-8">
 
-    // ブラウザが開いている現在の「パス（/card/...）」と「クエリ（?foo=bar）」を取得
-    const path = window.location.pathname;
-    const search = window.location.search;
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    // 転送先 URL を作成してリダイレクト
-    window.location.replace(TARGET_URL + path + search);
-  </script>
+    <title>おめっと</title>
+
+    <meta
+        name="description"
+        content="おめっと - デジタル寄せ書き・誕生日カード"
+    >
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                "Noto Sans JP",
+                sans-serif;
+
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .message {
+            font-size: 15px;
+            color: #777;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+
+            margin: 20px auto;
+
+            border: 4px solid #e0e0e0;
+            border-top-color: #06c755;
+
+            border-radius: 50%;
+
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            display: none;
+
+            max-width: 400px;
+            padding: 24px;
+
+            text-align: center;
+        }
+
+        .error h1 {
+            margin-top: 0;
+            font-size: 22px;
+        }
+
+        .error p {
+            color: #666;
+            line-height: 1.7;
+        }
+
+        .retry {
+            display: inline-block;
+
+            margin-top: 12px;
+            padding: 10px 20px;
+
+            border: none;
+            border-radius: 8px;
+
+            background: #06c755;
+            color: white;
+
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .retry:hover {
+            opacity: 0.9;
+        }
+    </style>
 </head>
+
 <body>
-  <p>転送中...</p>
+
+    <!-- ローディング表示 -->
+    <div id="loading" class="loading">
+
+        <div class="logo">
+            おめっと
+        </div>
+
+        <div class="spinner"></div>
+
+        <div class="message">
+            カードを読み込んでいます…
+        </div>
+
+    </div>
+
+
+    <!-- エラー表示 -->
+    <div id="error" class="error">
+
+        <h1>
+            カードを読み込めませんでした
+        </h1>
+
+        <p>
+            カードのURLが正しくないか、<br>
+            一時的にアクセスできない可能性があります。
+        </p>
+
+        <button
+            class="retry"
+            onclick="location.reload()"
+        >
+            もう一度試す
+        </button>
+
+    </div>
+
+
+    <script>
+        /*
+         * ============================================
+         * おめっと
+         * Render → Cloudflare Tunnel 転送
+         * ============================================
+         *
+         * Render:
+         *
+         * https://ometto.onrender.com
+         *
+         * Cloudflare Tunnel:
+         *
+         * https://dried-weapon-divide-job.trycloudflare.com
+         *
+         * 例:
+         *
+         * Render:
+         * /card/card_vnw4yk4
+         *
+         * ↓
+         *
+         * Cloudflare:
+         * /card/card_vnw4yk4
+         */
+
+
+        // ============================================
+        // 設定
+        // ============================================
+
+        const CLOUDFLARE_URL =
+            "https://dried-weapon-divide-job.trycloudflare.com";
+
+
+        // ============================================
+        // 転送処理
+        // ============================================
+
+        function redirectToCloudflare() {
+
+            // 現在のURLからパスを取得
+            //
+            // 例:
+            // /card/card_vnw4yk4
+            //
+            const path =
+                window.location.pathname;
+
+
+            // URLパラメータ
+            //
+            // 例:
+            // ?test=123
+            //
+            const search =
+                window.location.search;
+
+
+            // ハッシュ
+            //
+            // 例:
+            // #open
+            //
+            const hash =
+                window.location.hash;
+
+
+            // /card/ 以外だった場合
+            if (!path.startsWith("/card/")) {
+
+                showError(
+                    "このページはカードURLからアクセスしてください。"
+                );
+
+                return;
+            }
+
+
+            // Cloudflare側のURLを作成
+            const target =
+                CLOUDFLARE_URL +
+                path +
+                search +
+                hash;
+
+
+            // デバッグ用
+            console.log(
+                "おめっとカード転送:",
+                target
+            );
+
+
+            /*
+             * replace() を使用。
+             *
+             * これにより、
+             *
+             * Render URL
+             *
+             * ↓
+             *
+             * Cloudflare URL
+             *
+             * という転送になります。
+             *
+             * ブラウザの「戻る」で
+             * Renderの中継ページに戻りにくくなります。
+             */
+
+            window.location.replace(target);
+        }
+
+
+        // ============================================
+        // エラー表示
+        // ============================================
+
+        function showError(message) {
+
+            const loading =
+                document.getElementById("loading");
+
+            const error =
+                document.getElementById("error");
+
+
+            if (loading) {
+                loading.style.display = "none";
+            }
+
+
+            if (error) {
+
+                error.style.display = "block";
+
+                const paragraph =
+                    error.querySelector("p");
+
+                if (paragraph) {
+                    paragraph.textContent = message;
+                }
+            }
+        }
+
+
+        // ============================================
+        // ページ読み込み完了後に実行
+        // ============================================
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                redirectToCloudflare();
+
+            }
+        );
+
+    </script>
+
 </body>
 </html>
