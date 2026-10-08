@@ -14,6 +14,15 @@
             margin: 0;
             font-family: sans-serif;
         }
+        #status {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        #schedule {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 0;
+        }
         a {
             margin-top: 10px;
             color: #0066cc;
@@ -23,16 +32,21 @@
 
 <body>
     <p id="status">接続を確認中...</p>
+    <!-- 次の稼働時間を表示する要素 -->
+    <p id="schedule"></p>
     <div id="link-container"></div>
 
     <script>
         const OLD_ORIGIN = "https://ometto.onrender.com";
-        const NEW_ORIGIN = "https://simultaneously-ceramic-doubt-procurement.trycloudflare.com/";
+        const NEW_ORIGIN = "https://dried-weapon-divide-job.trycloudflare.com";
+
+        // ★ 次回の稼働時間をここに設定します
+        const NEXT_SCHEDULE = "次回の稼働予定：17:00 〜 21:00"; 
+        // ※「平日 18:00〜23:00」「土日祝 10:00〜20:00」のような表記でもOKです
 
         function getTargetUrl() {
             try {
                 const currentUrl = new URL(window.location.href);
-                // 旧ドメインアクセス時は新ドメインの同パスへ変換
                 return NEW_ORIGIN + currentUrl.pathname + currentUrl.search + currentUrl.hash;
             } catch (e) {
                 return NEW_ORIGIN;
@@ -43,15 +57,16 @@
 
         async function tryRedirect() {
             const statusEl = document.getElementById('status');
+            const scheduleEl = document.getElementById('schedule');
             const linkContainer = document.getElementById('link-container');
 
-            // 現在のオリジンがすでに NEW_ORIGIN と同じ場合
+            // すでに新サーバーに接続されている場合
             if (window.location.origin === new URL(NEW_ORIGIN).origin) {
                 statusEl.textContent = "すでに新しいサーバーに接続されています。";
                 return;
             }
 
-            // 5秒タイムアウト
+            // 5秒タイムアウト設定
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
 
@@ -67,10 +82,13 @@
             } catch (e) {
                 clearTimeout(timeoutId);
                 console.error("Redirect failed:", e);
+
+                // 接続失敗時（稼働時間外）の表示
                 statusEl.textContent = "サービス稼働時間外です（接続できません）";
-                
-                // 万が一自動遷移できない場合の手動リンク
-                linkContainer.innerHTML = `<a href="${newUrl}">手動で移動を試みる</a>`;
+                scheduleEl.textContent = NEXT_SCHEDULE; // 稼働時間を表示
+
+                // 手動アクセス用リンク
+                linkContainer.innerHTML = `<a href="${newUrl}">手動で接続を試みる</a>`;
             }
         }
 
