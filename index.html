@@ -4,25 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>おめっと</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+        #status {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        #schedule {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 0;
+        }
+        a {
+            margin-top: 10px;
+            color: #0066cc;
+        }
+    </style>
 </head>
 
 <body>
-    <p>Loading...</p>
+    <p id="status">接続を確認中...</p>
+    <p id="schedule"></p>
+    <div id="link-container"></div>
 
     <script>
-        // 現在開いているURL
-        const oldUrl = window.location.href;
+        const OLD_ORIGIN = "https://ometto.onrender.com";
+        const NEW_ORIGIN = "https://simultaneously-ceramic-doubt-procurement.trycloudflare.com/";
 
-        // Render → Cloudflare にドメインだけ置き換える
-        const newUrl = oldUrl.replace(
-            "https://ometto.onrender.com",
-            "https://simultaneously-ceramic-doubt-procurement.trycloudflare.com/"
-        );
+        const NEXT_SCHEDULE = "次回の稼働予定：17:00 〜 21:00"; 
 
-        console.log(newUrl);
+        function getTargetUrl() {
+            try {
+                const currentUrl = new URL(window.location.href);
+                return NEW_ORIGIN + currentUrl.pathname + currentUrl.search + currentUrl.hash;
+            } catch (e) {
+                return NEW_ORIGIN;
+            }
+        }
 
-        // Cloudflareへ移動
-        window.location.href = newUrl;
+        const newUrl = getTargetUrl();
+
+        async function tryRedirect() {
+            const statusEl = document.getElementById('status');
+            const scheduleEl = document.getElementById('schedule');
+            const linkContainer = document.getElementById('link-container');
+
+            if (window.location.origin === new URL(NEW_ORIGIN).origin) {
+                statusEl.textContent = "すでに新しいサーバーに接続されています。";
+                return;
+            }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+            try {
+                await fetch(newUrl, { 
+                    mode: 'no-cors',
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                statusEl.textContent = "転送中...";
+                window.location.href = newUrl;
+            } catch (e) {
+                clearTimeout(timeoutId);
+                console.error("Redirect failed:", e);
+
+                statusEl.textContent = "サービス稼働時間外です（接続できません）";
+                scheduleEl.textContent = NEXT_SCHEDULE;
+
+                linkContainer.innerHTML = `<a href="${newUrl}">手動で接続を試みる</a>`;
+            }
+        }
+
+        tryRedirect();
     </script>
 </body>
 </html>
