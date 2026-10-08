@@ -32,7 +32,6 @@
 
 <body>
     <p id="status">接続を確認中...</p>
-    <!-- 次の稼働時間を表示する要素 -->
     <p id="schedule"></p>
     <div id="link-container"></div>
 
@@ -40,9 +39,7 @@
         const OLD_ORIGIN = "https://ometto.onrender.com";
         const NEW_ORIGIN = "https://simultaneously-ceramic-doubt-procurement.trycloudflare.com/";
 
-        // ★ 次回の稼働時間をここに設定します
         const NEXT_SCHEDULE = "次回の稼働予定：17:00 〜 21:00"; 
-        // ※「平日 18:00〜23:00」「土日祝 10:00〜20:00」のような表記でもOKです
 
         function getTargetUrl() {
             try {
@@ -60,13 +57,11 @@
             const scheduleEl = document.getElementById('schedule');
             const linkContainer = document.getElementById('link-container');
 
-            // すでに新サーバーに接続されている場合
             if (window.location.origin === new URL(NEW_ORIGIN).origin) {
                 statusEl.textContent = "すでに新しいサーバーに接続されています。";
                 return;
             }
 
-            // 5秒タイムアウト設定
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
 
@@ -83,11 +78,9 @@
                 clearTimeout(timeoutId);
                 console.error("Redirect failed:", e);
 
-                // 接続失敗時（稼働時間外）の表示
                 statusEl.textContent = "サービス稼働時間外です（接続できません）";
-                scheduleEl.textContent = NEXT_SCHEDULE; // 稼働時間を表示
+                scheduleEl.textContent = NEXT_SCHEDULE;
 
-                // 手動アクセス用リンク
                 linkContainer.innerHTML = `<a href="${newUrl}">手動で接続を試みる</a>`;
             }
         }
