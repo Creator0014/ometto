@@ -4,10 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>おめっと</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+    </style>
 </head>
 
 <body>
-    <p>Loading...</p>
+    <p id="status">Loading...</p>
 
     <script>
         // 現在開いているURL
@@ -16,13 +26,28 @@
         // Render → Cloudflare にドメインだけ置き換える
         const newUrl = oldUrl.replace(
             "https://ometto.onrender.com",
-            "https://simultaneously-ceramic-doubt-procurement.trycloudflare.com/"
+            "https://dried-weapon-divide-job.trycloudflare.com"
         );
 
-        console.log(newUrl);
+        console.log("Target URL:", newUrl);
 
-        // Cloudflareへ移動
-        window.location.href = newUrl;
+        async function tryRedirect() {
+            const statusEl = document.getElementById('status');
+            try {
+                // mode: 'no-cors' を使用して、CORS制限を回避しつつ接続を確認する。
+                // サーバーに到達できれば（たとえ中身が読めなくても）resolve される。
+                // 接続不能（DNSエラーや接続拒否）の場合は catch に飛ぶ。
+                await fetch(newUrl, { mode: 'no-cors' });
+
+                // 接続確認ができたらリダイレクト
+                window.location.href = newUrl;
+            } catch (e) {
+                console.error("Redirect failed (service might be down):", e);
+                statusEl.textContent = "サービス稼働時間外です";
+            }
+        }
+
+        tryRedirect();
     </script>
 </body>
 </html>
