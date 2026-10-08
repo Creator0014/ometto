@@ -7,67 +7,70 @@
     <style>
         body {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
             font-family: sans-serif;
         }
+        a {
+            margin-top: 10px;
+            color: #0066cc;
+        }
     </style>
 </head>
 
 <body>
     <p id="status">接続を確認中...</p>
+    <div id="link-container"></div>
 
     <script>
         const OLD_ORIGIN = "https://ometto.onrender.com";
-        const NEW_ORIGIN = "https://simultaneously-ceramic-doubt-procurement.trycloudflare.com/"; // ※ドメインが変わったらここを変更
+        const NEW_ORIGIN = "https://dried-weapon-divide-job.trycloudflare.com";
 
         function getTargetUrl() {
             try {
                 const currentUrl = new URL(window.location.href);
-                // 旧ドメインでアクセスされた場合、オリジン（プロトコル+ドメイン）だけを置換
-                if (currentUrl.origin === OLD_ORIGIN) {
-                    return NEW_ORIGIN + currentUrl.pathname + currentUrl.search + currentUrl.hash;
-                }
-                // すでに新ドメインにいる場合やローカル環境等の場合はそのまますすめる
-                return currentUrl.href.replace(OLD_ORIGIN, NEW_ORIGIN);
+                // 旧ドメインアクセス時は新ドメインの同パスへ変換
+                return NEW_ORIGIN + currentUrl.pathname + currentUrl.search + currentUrl.hash;
             } catch (e) {
                 return NEW_ORIGIN;
             }
         }
 
         const newUrl = getTargetUrl();
-        console.log("Target URL:", newUrl);
 
         async function tryRedirect() {
             const statusEl = document.getElementById('status');
+            const linkContainer = document.getElementById('link-container');
 
-            // 無限リダイレクト防止
-            if (window.location.href === newUrl) {
-                statusEl.textContent = "すでに新しいURLにアクセスしています。";
+            // 現在のオリジンがすでに NEW_ORIGIN と同じ場合
+            if (window.location.origin === new URL(NEW_ORIGIN).origin) {
+                statusEl.textContent = "すでに新しいサーバーに接続されています。";
                 return;
             }
 
-            // 5秒でタイムアウトするように設定
+            // 5秒タイムアウト
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
 
             try {
-                // 接続確認（CORS制限回避のため no-cors）
                 await fetch(newUrl, { 
                     mode: 'no-cors',
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
 
-                // 接続確認ができたらリダイレクト
                 statusEl.textContent = "転送中...";
                 window.location.href = newUrl;
             } catch (e) {
                 clearTimeout(timeoutId);
-                console.error("Redirect failed (service might be down or timed out):", e);
-                statusEl.textContent = "サービス稼働時間外です（または接続できません）";
+                console.error("Redirect failed:", e);
+                statusEl.textContent = "サービス稼働時間外です（接続できません）";
+                
+                // 万が一自動遷移できない場合の手動リンク
+                linkContainer.innerHTML = `<a href="${newUrl}">手動で移動を試みる</a>`;
             }
         }
 
